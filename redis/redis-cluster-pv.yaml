@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-pv
+spec:
+  capacity:
+    storage: 2Gi  # Redis için ayrılan disk alanı
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain  # Redis pod'u silinse bile veriler korunur
+  storageClassName: manual  # Elle yönetilen bir storage class
+  hostPath:
+    path: "/mnt/data/redis-cluster"  # Minikube için yerel bir yol, bulut ortamında farklı olabilir

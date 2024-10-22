@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+spec:
+  serviceName: redis
+  replicas: 6  # 6 Redis nodes for the cluster
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.4.1
+        ports:
+        - containerPort: 6379
+        command:
+          - sh
+          - -c
+          - |
+            # Change directory to the folder for this instance
+            mkdir -p /data/redis/${HOSTNAME}
+            cd /data/redis/${HOSTNAME}
+            
+            # Copy redis.conf to the instance folder
+            cp /redis-conf/redis.conf ./redis.conf
+
+            # Start redis-server from this directory
+            redis-server ./redis.conf
+        volumeMounts:
+        - name: redis-conf
+          mountPath: /redis-conf  # ConfigMap for redis.conf
+        - name: redis-data
+          mountPath: /data  # Persistent Volume for Redis data (to persist nodes.conf)
+      volumes:
+      - name: redis-conf
+        configMap:
+          name: redis-cluster-config  # Redis configuration is provided via ConfigMap
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-data-pvc  # Persistent Volume Claim for Redis data
